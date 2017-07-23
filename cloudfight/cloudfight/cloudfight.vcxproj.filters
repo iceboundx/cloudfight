@@ -38,4 +38,9 @@
       <Filter>资源文件</Filter>
     </ResourceCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="C:\Users\刘小猫\Desktop\TIM截图20170716111056~1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
 </Project>

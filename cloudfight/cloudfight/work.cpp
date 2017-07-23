@@ -4,13 +4,15 @@ const int N=100;
 char fs1[N][N];
 char fs2[N][N][N];
 int fp[N][N],pcnt;
-const int seed=19990824;
+int seed=19990824;
 int randseed[2005];//power seed 
 int rs[2][2005];//fight seed
 int fcnt;//过程计数器 
 int hp[3],power[3];
 char opt[N][N*2];
 char s1[N],s2[N];
+void ChangeSeed(int s)
+{seed=s;}
 struct fight
 {
 	int id;

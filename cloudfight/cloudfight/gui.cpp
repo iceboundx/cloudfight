@@ -2,7 +2,7 @@
 #include"work.h"
 #include"resource.h"
 HWND hid;
-bool AbtOpen=0,HelpOpen=0;
+bool AbtOpen=0,SetOpen=0;
 
 void OpenUrl(LPCWSTR url)
 {
@@ -10,16 +10,11 @@ void OpenUrl(LPCWSTR url)
 	if((int)result<=HINSTANCE_ERROR)
 		result=ShellExecute(NULL, NULL, L"iexplore.exe", url, NULL, SW_SHOW);
 }
-void StrChangeToNum(int num,char str[])
+int GetSeed(char s[])
 {
-	int cnt=0;
-	while(num)
-	{
-		str[cnt]=num%10+'0';
-		cnt++;num/=10;
-	}
-	reverse(str,str+cnt);
-	str[cnt+1]='\0';
+	int len=strlen(s),ret=0,p=1;
+	for(int i=len-1;i;i--)ret+=p*(s[i]-'0');
+	return ret;
 }
 int Inc(char *str)
 {
@@ -61,7 +56,7 @@ int APIENTRY WinMain(
 	wndclass.cbWndExtra=NULL;
 	wndclass.hInstance=hInstance;
 	wndclass.hbrBackground=CreateSolidBrush(RGB(211,211,211));
-	wndclass.hIcon=LoadIcon(hInstance,IDI_APPLICATION);
+	wndclass.hIcon=LoadIcon(hInstance,MAKEINTRESOURCE(IDI_ICON1));
 	wndclass.hCursor=LoadCursor(hInstance, IDC_ARROW);
 	wndclass.lpszMenuName=NULL;
 	wndclass.lpszClassName=L"cloudfight";
@@ -124,8 +119,7 @@ DWORD CALLBACK Paint(LPVOID lpParam)
 			WCHAR Buf[500];memset(Buf,0,sizeof Buf);
 			for(int j=lst,k=0;j<i;j++,k++)output[k]=otput[j];
 			strcat_s(output,"\r\n");
-			MultiByteToWideChar(CP_ACP,0,output,strlen(output)+1,Buf,  
-				sizeof(Buf)/sizeof(Buf[0])); 
+			MultiByteToWideChar(CP_ACP,0,output,strlen(output)+1,Buf,sizeof(Buf)/sizeof(Buf[0])); 
 			SendMessage(hwndOut,EM_SETSEL,-2,-1);
 			SendMessage(hwndOut,EM_REPLACESEL,0,(LPARAM)Buf);
 			SendMessage(hwndOut,WM_VSCROLL,SB_BOTTOM,0);
@@ -136,6 +130,44 @@ DWORD CALLBACK Paint(LPVOID lpParam)
 	EnableWindow(hwndEditA,1);
 	EnableWindow(hwndEditB,1);
 	return 0;
+}
+INT_PTR CALLBACK SetProc(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam) 
+{
+	switch (msg)
+	{
+		
+	case WM_INITDIALOG:
+		SendMessage(GetDlgItem(hdlg,IDC_EDIT1),EM_SETLIMITTEXT,(TCHAR)8,NULL);break;
+	case WM_SYSCOMMAND:
+		if(wParam==SC_CLOSE)
+		{
+			SetOpen=0;
+			DestroyWindow(hdlg);
+		}
+		break;
+	case WM_COMMAND:
+		if(LOWORD(wParam)==IDC_OK)
+		{
+			WCHAR Buf[50];
+			char BufA[50];
+			memset(Buf,0,sizeof Buf);
+			memset(BufA,0,sizeof BufA);
+			HWND h=GetDlgItem(hdlg,IDC_EDIT1);
+			GetWindowText(h,Buf,45);
+			int sz=WideCharToMultiByte(CP_ACP,0,Buf,-1,NULL,0,NULL,NULL);
+			WideCharToMultiByte(CP_ACP,0,Buf,-1,BufA,sz,NULL,NULL);
+			ChangeSeed(GetSeed(BufA));
+			MessageBox(hdlg,L"修改成功",L"设置",MB_OK);
+			SetOpen=0;
+			DestroyWindow(hdlg);
+		}
+		else if(LOWORD(wParam)==IDC_CANCEL)
+		{			SetOpen=0;
+				DestroyWindow(hdlg);
+		}break;
+
+	}
+	return (INT_PTR)FALSE;
 }
 INT_PTR CALLBACK AbtProc(HWND hdlg, UINT msg, WPARAM wParam, LPARAM lParam)  
 {
@@ -253,12 +285,21 @@ LRESULT CALLBACK WinProc(
 				}
 				case IDM_SETTING:
 				{
-					MessageBox(NULL,L"该功能正在制作中，详情请访问icebound.win",L"设置",MB_OK);
+					if(SetOpen==1){error(6);break;}
+					SetOpen=1;
+					hid=CreateDialog(clf,MAKEINTRESOURCE(IDD_SETTING),hwnd,(DLGPROC)SetProc);
+					if(hid)ShowWindow(hid,SW_NORMAL);
+					else
+					{
+						error(7);
+						SetOpen=0;
+						break;
+					}
 					break;
 				}
 				case IDM_HELP:
 				{
-					MessageBox(NULL,L"向两个编辑框中分别输入两个名字，再点击FIGHT，即可享受云打架的乐趣！",
+					MessageBox(NULL,L"向两个编辑框中分别输入两个名字，再点击FIGHT，即可享受云打架的乐趣！在设置中可以更改随机数种子！",
 						L"帮助",MB_OK);
 					break;
 				}
